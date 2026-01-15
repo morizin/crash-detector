@@ -1,0 +1,8 @@
+artifact-path: artifacts
+schema-path: schemas
+
+data-sources:
+  gta-crash:
+    source: kaggle
+    type: datasets
+    link: morizin/vision-crash-dataset
