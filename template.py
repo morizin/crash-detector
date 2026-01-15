@@ -3,7 +3,7 @@ import subprocess
 import logging
 import os
 
-logging.basicConfig(level = logging.INFO, format = "[%(asctime)s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s: %(message)s")
 
 subprocess.call(["uv", "init"])
 
@@ -15,6 +15,8 @@ list_of_files = [
     "src/{project_name}/utils/common.py",
     "src/{project_name}/config/__init__.py",
     "src/{project_name}/config/config.py",
+    "src/{project_name}/core/__init__.py",
+    "src/{project_name}/core/common.py",
     "src/{project_name}/components/__init__.py",
     "src/{project_name}/components/dataset/__init__.py",
     "src/{project_name}/components/models/__init__.py",
@@ -22,8 +24,7 @@ list_of_files = [
     "src/{project_name}/components/engines/__init__.py",
     "src/{project_name}/components/loss/__init__.py",
     "src/{project_name}/constants/__init__.py",
-    "src/{project_name}/entity/__init__.py",
-    "src/{project_name}/entity/common.py",
+    "src/{project_name}/errors/__init__.py",
     "Dockerfile",
     "docker-compose.yaml",
     ".github/workflow/.gitkeep",
@@ -36,18 +37,16 @@ list_of_files = [
 ]
 
 for file in list_of_files:
-    filepath = Path(file.format(project_name = project_name))
+    filepath = Path(file.format(project_name=project_name))
     dirname, filename = os.path.split(filepath)
-    
+
     if dirname != "":
-        os.makedirs(dirname, exist_ok = True)
-        logging.info(f"Created directory {dirname} for the file {filename}") 
+        os.makedirs(dirname, exist_ok=True)
+        logging.info(f"Created directory {dirname} for the file {filename}")
 
     if not filepath.exists() or os.path.getsize(filepath) == 0:
-        subprocess.call(["touch", str(filepath) ])
+        subprocess.call(["touch", str(filepath)])
         logging.info(f"Creating an empty file {filepath}")
 
     else:
         logging.info(f"File {filepath} already exists")
-
-
