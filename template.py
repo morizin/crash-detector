@@ -14,7 +14,6 @@ list_of_files = [
     "src/{project_name}/utils/__init__.py",
     "src/{project_name}/utils/common.py",
     "src/{project_name}/config/__init__.py",
-    "src/{project_name}/config/config.py",
     "src/{project_name}/core/__init__.py",
     "src/{project_name}/core/common.py",
     "src/{project_name}/components/__init__.py",

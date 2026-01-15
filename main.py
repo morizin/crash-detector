@@ -1,6 +1,8 @@
-def main():
-    print("Hello from crash-detection-project!")
-
+from src.crash_detection.pipelines.base import BasePipeline
 
 if __name__ == "__main__":
-    main()
+    try:
+        pipeline = BasePipeline()
+        pipeline.kickoff()
+    except Exception as e:
+        raise e
