@@ -1,6 +1,12 @@
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "gdown",
+# ]
+# ///
 import subprocess
 import gdown
-import os
+import argparse
 
 
 GTA_CRASH_IMAGES = [
@@ -45,25 +51,31 @@ TEST_CRASH_LABELS = [
 
 TEST_SAFE_LABELS = ["1lLEY3Gj6sWJCDcGLi0RYomeWCtTHXQIt"]
 
-for name in ["GTA", "TEST", "YT"][:2]:
-    for label in ["CRASH", "SAFE"]:
-        src_folder = f"/kaggle/working/{name}_{label}"
-        for images, labels in zip(
-            eval(f"{name}_TRAIN_{label}_IMAGES"), eval(f"{name}_TRAIN_{label}_LABELS")
-        ):
-            print(f"{images = } {labels = }")
-            gdown.download(id=images, resume=True)
-            subprocess.call(
-                f"tar -xf {os.path.join(src_folder, 'images.tar.gz')}".split()
-            )
-            subprocess.call(
-                f"rm -f".split() + [os.path.join(src_folder, "images.tar.gz")]
-            )
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--output_folder",
+        type=str,
+        default="./data",
+        help="Output folder to save the downloaded dataset",
+    )
+    args = parser.parse_args()
 
-            gdown.download(id=labels, resume=True)
-            subprocess.call(
-                f"tar -xf {os.path.join(src_folder, 'labels.tar.gz')}".split()
-            )
-            subprocess.call(
-                f"rm -f".split() + [os.path.join(src_folder, "labels.tar.gz")]
-            )
+    subprocess.call(["mkdir", "-p", args.output_folder])
+    for name in ["GTA", "TEST", "YT"][:2]:
+        for label in ["CRASH", "SAFE"]:
+            src_folder = f"/kaggle/working/{name}_{label}"
+            for images, labels in zip(
+                eval(f"{name}_{label}_IMAGES"), eval(f"{name}_{label}_LABELS")
+            ):
+                file_name = gdown.download(
+                    id=images, resume=True, output=args.output_folder
+                )
+                subprocess.call(["tar", "-xf", file_name, "-C", args.output_folder])
+                subprocess.call(["rm", "-f", file_name])
+
+                file_name = gdown.download(
+                    id=labels, resume=True, output=args.output_folder
+                )
+                subprocess.call(["tar", "-xf", file_name, "-C", args.output_folder])
+                subprocess.call(["rm", "-f", file_name])
