@@ -1,13 +1,12 @@
-import pandas as pd
-import json
 from tqdm.contrib.concurrent import thread_map
-import numpy as np
-import shutil
-import os
-import argparse
-from glob import glob
 from functools import partial
-from tqdm.contrib.concurrent import thread_map
+from glob import glob
+import pandas as pd
+import numpy as np
+import argparse
+import shutil
+import json
+import os
 
 SOURCE_DIR = "raw/"
 FINAL_DIR = "artifacts/data/raw"
