@@ -7,10 +7,13 @@ requires-python = ">=3.13"
 dependencies = [
     "kaggle>=1.8.3",
     "numpy==2.4.1",
+    "opencv-python-headless>=4.13.0.90",
     "pandas>=2.3.3",
     "pydantic>=2.12.5",
     "python-box>=7.3.2",
     "python-dotenv>=1.2.1",
     "pyyaml>=6.0.3",
+    "scikit-learn>=1.8.0",
+    "torch>=2.9.1",
     "typeguard>=4.4.4",
 ]
