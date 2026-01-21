@@ -1,0 +1,39 @@
+train: train.csv
+train_image_folder: train_images/
+test: test.csv
+test_image_folder: test_images/
+
+columns:
+  id: str
+  vid: int
+  fid: int
+  filename: str
+
+additional-properties: 
+  acceleration: float
+  speed: float
+
+  angularVelocity_x: float
+  angularVelocity_y: float
+  angularVelocity_z: float
+
+  forwardV_x: float
+  forwardV_y: float
+  forwardV_z: float
+
+  objectSize_x: float
+  objectSize_y: float
+  objectSize_z: float
+
+  position_x: float
+  position_y: float
+  position_z: float
+
+  vehicleCount: int
+  vehicleInfo: object
+
+categorical:
+  - vid
+  - fid
+
+target: target
