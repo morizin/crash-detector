@@ -43,7 +43,7 @@ class BasePipeline:
     @typechecked
     def do_data_transformation(
         self, data_transformation_config: DataTransformationConfig
-    ) -> DataTransformationArtifact:
+    ) -> DataTransformationArtifact | None:
         try:
             logger.info("Data Transformation ....")
             data_transformation_component = DataTransformationComponent(
