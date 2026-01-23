@@ -1,7 +1,40 @@
 artifact-path: artifacts
+seed: 42
 
-data-sources:
+data:
   gta-crash:
     source: kaggle
     type: datasets
     link: morizin/vision-crash-dataset
+
+
+models:
+  video-classifier:
+    datasets: [ gta-crash ]
+    type: video-2d-classification
+    transforms:
+      frames-per-clip: 20
+      split: 
+        type: skfold
+        ratio: 0.8
+      resize:
+        height: 224
+        width: 224
+      normalize: false
+      grayscale: true
+
+    source-model: resnet18
+    loss: binary-cross-entropy
+    metrics:
+      - accuracy
+      - precision
+      - recall
+    
+    optimizer: adam
+    learning-rate: 0.001
+    batch-size: 32
+    epochs: 10
+    gradient-accumulation-steps: 1
+    outdir: video-classifier
+
+

@@ -1,13 +1,13 @@
-train: train.csv
+train: [train.csv]
 train_image_folder: train_images/
-test: test.csv
+test: [test.csv]
 test_image_folder: test_images/
 
 columns:
-  id: str
+  id: object
   vid: int
   fid: int
-  filename: str
+  filename: object
 
 additional-properties: 
   acceleration: float
