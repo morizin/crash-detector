@@ -1,16 +1,15 @@
 from .. import logger, TIMESTAMP
 from pathlib import Path
-from ..core.config_entity import (
+from .config_entity import (
     DataSource,
     DataIngestionConfig,
-    DataSchema,
     DataValidataionConfig,
     DataTransformationConfig,
     ModelTrainingConfig,
     DataSplitConfig,
 )
 
-from ..core.artifact_entity import DataIngestionArtifact
+from .artifact_entity import DataIngestionArtifact, DataValidationArtifact
 
 from ..utils.common import load_yaml, seed_everything
 from ..constants import (
@@ -19,6 +18,7 @@ from ..constants import (
     MODELS_DIRECTORY_NAME,
     SCHEMA_DIR,
     REPORT_NAME,
+    RAW_DATA_DIRECTORY_NAME,
     TRANSFORMED_DATA_DIRECTORY_NAME,
 )
 from ..core import Directory
@@ -51,29 +51,25 @@ class ConfigurationManager:
     def get_data_ingestion_config(
         self,
     ) -> DataIngestionConfig:
-        outdir = self.data_dir // "raw"
+        outdir = self.data_dir // RAW_DATA_DIRECTORY_NAME
 
         return DataIngestionConfig(data_sources=self.get_data_sources(), outdir=outdir)
 
-    def get_data_validation_config(self):
-        data_schemes = {}
-        for d_name in self.config.data_sources:
-            data_schemes[d_name] = DataSchema(name=d_name)
-
+    def get_data_validation_config(
+        self, data_ingestion_artifact: DataIngestionArtifact
+    ) -> DataValidataionConfig:
         return DataValidataionConfig(
-            report_name=self.artifact_path
-            // DATA_DIRECTORY_NAME
-            / f"{REPORT_NAME}.yaml",
-            indir=DATA_DIRECTORY_NAME,
-            outdir=self.artifact_path // REPORT_NAME,
+            report_path=self.artifact_path / f"{REPORT_NAME}.json",
+            indir=Directory(path=DATA_DIRECTORY_NAME) // RAW_DATA_DIRECTORY_NAME,
+            outdir=Directory(path=DATA_DIRECTORY_NAME),
             pixel_histogram=False,
             statistics=False,
             kl_divergence=False,
-            schemas=data_schemes,
+            schemas=data_ingestion_artifact.schemas,
         )
 
     def model_training_config(
-        self, data_ingestion_artifact: DataIngestionArtifact
+        self, data_validation_artifact: DataValidationArtifact
     ) -> dict[str, ModelTrainingConfig]:
         models = self.config.models
         model_configs = {}
@@ -83,10 +79,8 @@ class ConfigurationManager:
                 name=model,
                 type=params.type,
                 transforms=DataTransformationConfig(
-                    indir=data_ingestion_artifact.path,
-                    datasets={
-                        d_name: DataSchema(name=d_name) for d_name in params.datasets
-                    },
+                    indir=data_validation_artifact.valid_data_dir,
+                    schemas=data_validation_artifact.schemas,
                     split=DataSplitConfig(
                         type=params.transforms.split.type,
                         ratio=params.transforms.split.ratio,

@@ -1,16 +1,22 @@
 from ..config import ConfigurationManager
-from ..core.config_entity import (
+from ..config.config_entity import (
     DataIngestionConfig,
+    DataValidataionConfig,
     DataTransformationConfig,
     ModelTrainingConfig,
 )
-from ..core.artifact_entity import DataIngestionArtifact, DataTransformationArtifact
+from ..config.artifact_entity import (
+    DataIngestionArtifact,
+    DataValidationArtifact,
+    DataTransformationArtifact,
+)
 
 from typeguard import typechecked
 from .. import logger
 
 from ..components.data.ingestion import DataIngestionComponent
 from ..components.data.transformation import DataTransformationComponent
+from ..components.data.validation import DataValidationComponent
 
 
 class BasePipeline:
@@ -41,16 +47,38 @@ class BasePipeline:
             raise e
 
     @typechecked
+    def do_data_validation(
+        self,
+        data_ingestion_artifact: DataIngestionArtifact,
+    ) -> DataValidationArtifact:
+        try:
+            logger.info("Data Validation ....")
+            data_validation_config: DataValidataionConfig = (
+                self.config.get_data_validation_config(
+                    data_ingestion_artifact=data_ingestion_artifact
+                )
+            )
+
+            data_validation_artifact = DataValidationComponent(
+                config=data_validation_config,
+            )()
+            logger.info("Data Validation Completed")
+            return data_validation_artifact
+        except Exception as e:
+            logger.error(f"Error during data validation {e}")
+            raise e
+
+    @typechecked
     def do_data_transformation(
         self, data_transformation_config: DataTransformationConfig
-    ) -> DataTransformationArtifact | None:
+    ) -> DataTransformationArtifact:
         try:
             logger.info("Data Transformation ....")
-            data_transformation_component = DataTransformationComponent(
+            data_transformation_artifact = DataTransformationComponent(
                 config=data_transformation_config
             )()
             logger.info("Data Transformation Completed")
-            return data_transformation_component
+            return data_transformation_artifact
         except Exception as e:
             logger.error(f"Error during data transformation {e}")
             raise e
@@ -58,13 +86,13 @@ class BasePipeline:
     @typechecked
     def do_model_trainer(
         self,
-        data_ingestion_artifact: DataIngestionArtifact,
+        data_validation_artifact: DataValidationArtifact,
     ):
         try:
             logger.info("Model Trainer ....")
             model_trainer_config: dict[str, ModelTrainingConfig] = (
                 self.config.model_training_config(
-                    data_ingestion_artifact=data_ingestion_artifact
+                    data_validation_artifact=data_validation_artifact
                 )
             )
 
@@ -72,6 +100,7 @@ class BasePipeline:
                 data_transformation_artifact: DataTransformationArtifact = (
                     self.do_data_transformation(config.transforms)
                 )
+                print(data_transformation_artifact)
 
             # model_trainer_component = ModelTrainerComponent(
             #     config=model_trainer_config,
@@ -90,9 +119,11 @@ class BasePipeline:
         logger.info("Kicking off Base Pipeline")
         data_ingestion_artifact: DataIngestionArtifact = self.do_data_ingestion()
 
-        self.do_model_trainer(
-            data_ingestion_artifact=data_ingestion_artifact,
+        data_validation_artifact: DataValidationArtifact = self.do_data_validation(
+            data_ingestion_artifact=data_ingestion_artifact
         )
+
+        self.do_model_trainer(data_validation_artifact=data_validation_artifact)
         logger.info("Base Pipeline Completed")
-        print(data_ingestion_artifact)
+
         return data_ingestion_artifact

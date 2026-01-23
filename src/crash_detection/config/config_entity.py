@@ -1,4 +1,4 @@
-from .io_types import Directory
+from ..core.io_types import Directory
 from pydantic import BaseModel
 from pathlib import Path
 from typing import Optional
@@ -10,11 +10,14 @@ import os
 
 class DataSchema(BaseModel):
     name: str
+    path: Path | str | Directory
 
-    train: Optional[str] = None
-    train_image_folder: Optional[str] = None
-    test: Optional[str] = None
-    test_image_folder: Optional[str] = None
+    train: Optional[str | Path] = None
+    train_image_folder: Optional[str | Path] = None
+    valid: Optional[str | Path] = None
+    valid_image_folder: Optional[str | Path] = None
+    test: Optional[str | Path] = None
+    test_image_folder: Optional[str | Path] = None
 
     columns: Optional[dict[str, str]] = None
     categorical: Optional[list[str]] = None
@@ -26,14 +29,28 @@ class DataSchema(BaseModel):
         if os.path.exists(file_path):
             content = load_yaml(file_path)
 
-            self.train = content["train"]
-            self.train_image_folder = content["train_image_folder"]
-            self.test = content["test"]
-            self.test_image_folder = content["test_image_folder"]
+            self.path = Directory(path=self.path)
+
+            self.train = [self.path / f for f in content["train"]]
+            self.train_image_folder = Path(content["train_image_folder"])
+
+            self.valid = (
+                [self.path / f for f in content["valid"]]
+                if hasattr(content, "valid")
+                else None
+            )
+            self.valid_image_folder = (
+                Path(content["valid_image_folder"])
+                if hasattr(content, "valid_image_folder")
+                else None
+            )
+
+            self.test = [self.path / f for f in content["test"]]
+            self.test_image_folder = Path(content["test_image_folder"])
 
             self.columns = content["columns"]
             self.categorical = content.get("categorical", [])
-            self.additional_properties = content.get("additional_properties", {})
+            self.additional_properties = content.get("additional-properties", {})
             self.target = content["target"]
             return self
         else:
@@ -43,9 +60,9 @@ class DataSchema(BaseModel):
 
 
 class DataValidataionConfig(BaseModel):
-    report_name: Path | str
     indir: Directory
     outdir: Directory
+    report_path: Path | str
     pixel_histogram: bool
     statistics: bool
     kl_divergence: bool
@@ -84,7 +101,7 @@ class DataSplitConfig(BaseModel):
 
 class DataTransformationConfig(BaseModel):
     indir: Directory
-    datasets: dict[str, DataSchema]
+    schemas: dict[str, DataSchema]
     split: Optional[DataSplitConfig] = None
     frames_per_clip: int
     resize: dict[str, int]

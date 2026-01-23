@@ -97,11 +97,9 @@ def load_json(path: Path | str) -> dict[str | Any]:
 
 
 @typechecked
-def save_json(path: Path | str, data: dict[str | Any]):
+def save_json(path: Path | str, data: Any):
     import json
 
-    if isinstance(path, str):
-        path = Path(path)
     try:
         with open(path, "w") as json_file:
             json.dump(data, json_file, indent=4)

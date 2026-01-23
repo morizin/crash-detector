@@ -1,15 +1,15 @@
 import kaggle
 import os
-from ...core.config_entity import DataIngestionConfig
-from ...core.artifact_entity import DataIngestionArtifact
+from ...config.config_entity import DataIngestionConfig, DataSchema
+from ...config.artifact_entity import DataIngestionArtifact
 from ...errors import ComponentError
 from ... import logger
 
 
 class DataIngestionComponent:
-    def __init__(self, cfg: DataIngestionConfig):
+    def __init__(self, data_ingestion_config: DataIngestionConfig):
         try:
-            self.cfg: DataIngestionConfig = cfg
+            self.cfg: DataIngestionConfig = data_ingestion_config
             self.kaggle_api = kaggle.KaggleApi()
         except Exception as e:
             logger.error(f"Error at Data Ingestion Component {e}")
@@ -44,5 +44,9 @@ class DataIngestionComponent:
                     raise e
 
         return DataIngestionArtifact(
-            names=list(self.cfg.data_sources.keys()), path=self.cfg.outdir
+            path=self.cfg.outdir,
+            schemas={
+                name: DataSchema(name=name, path=self.cfg.outdir / name)
+                for name in self.cfg.data_sources.keys()
+            },
         )
