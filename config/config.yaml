@@ -32,8 +32,9 @@ models:
     
     optimizer: adam
     learning-rate: 0.001
-    batch-size: 32
-    epochs: 10
+    train-batch-size: 32
+    valid-batch-size: 32
+    n-epochs: 10
     gradient-accumulation-steps: 1
     outdir: video-classifier
 

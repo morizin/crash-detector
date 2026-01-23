@@ -11,9 +11,13 @@ class Directory(BaseModel):
 
     @field_validator("path", mode="before")
     @typechecked
-    def is_directory(cls, path: Path | str) -> Path:
+    def is_directory(cls, path) -> Path:
         if isinstance(path, str):
             path = Path(path)
+        elif isinstance(path, dict) and "path" in path:
+            path = Path(path["path"])
+        elif isinstance(path, Directory):
+            path = path.path
         path = path.expanduser()
         Directory.create(path)
         return path

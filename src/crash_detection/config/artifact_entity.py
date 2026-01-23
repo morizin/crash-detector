@@ -24,3 +24,8 @@ class DataTransformationArtifact(BaseModel):
     valid_file_path: Path
     test_file_path: Path
     schemas: dict[str, DataSchema]
+
+
+class ModelTrainingArtifact(BaseModel):
+    model_name: str
+    model_path: Path

@@ -1,3 +1,4 @@
+from ..core import Directory
 from ..config import ConfigurationManager
 from ..config.config_entity import (
     DataIngestionConfig,
@@ -9,6 +10,7 @@ from ..config.artifact_entity import (
     DataIngestionArtifact,
     DataValidationArtifact,
     DataTransformationArtifact,
+    ModelTrainingArtifact,
 )
 
 from typeguard import typechecked
@@ -17,6 +19,8 @@ from .. import logger
 from ..components.data.ingestion import DataIngestionComponent
 from ..components.data.transformation import DataTransformationComponent
 from ..components.data.validation import DataValidationComponent
+from ..components.training import ModelTrainingComponent
+from ..utils.common import save_pickle
 
 
 class BasePipeline:
@@ -40,6 +44,10 @@ class BasePipeline:
             )()
 
             logger.info("Data Ingesion Completed")
+            save_pickle(
+                path=self.config.artifact_path / "data_ingestion_artifact.pkl",
+                data=data_ingestion_artifact.model_dump(),
+            )
             return data_ingestion_artifact
 
         except Exception as e:
@@ -63,6 +71,11 @@ class BasePipeline:
                 config=data_validation_config,
             )()
             logger.info("Data Validation Completed")
+
+            save_pickle(
+                path=self.config.artifact_path / "data_validation_artifact.pkl",
+                data=data_validation_artifact.model_dump(),
+            )
             return data_validation_artifact
         except Exception as e:
             logger.error(f"Error during data validation {e}")
@@ -70,7 +83,9 @@ class BasePipeline:
 
     @typechecked
     def do_data_transformation(
-        self, data_transformation_config: DataTransformationConfig
+        self,
+        data_transformation_config: DataTransformationConfig,
+        model_path: Directory,
     ) -> DataTransformationArtifact:
         try:
             logger.info("Data Transformation ....")
@@ -78,6 +93,10 @@ class BasePipeline:
                 config=data_transformation_config
             )()
             logger.info("Data Transformation Completed")
+            save_pickle(
+                path=model_path / "data_transformation_artifact.pkl",
+                data=data_transformation_artifact.model_dump(),
+            )
             return data_transformation_artifact
         except Exception as e:
             logger.error(f"Error during data transformation {e}")
@@ -91,23 +110,25 @@ class BasePipeline:
         try:
             logger.info("Model Trainer ....")
             model_trainer_config: dict[str, ModelTrainingConfig] = (
-                self.config.model_training_config(
+                self.config.get_model_training_config(
                     data_validation_artifact=data_validation_artifact
                 )
             )
 
+            model_trainer_components: dict[str, ModelTrainingArtifact] = {}
             for model, config in model_trainer_config.items():
                 data_transformation_artifact: DataTransformationArtifact = (
-                    self.do_data_transformation(config.transforms)
+                    self.do_data_transformation(
+                        config.transforms, model_path=config.outdir
+                    )
                 )
-                print(data_transformation_artifact)
 
-            # model_trainer_component = ModelTrainerComponent(
-            #     config=model_trainer_config,
-            #     data_transformation_artifact=data_transformation_artifact,
-            # )()
+                model_trainer_components[model] = ModelTrainingComponent(
+                    config=config,
+                    data_transformation_artifact=data_transformation_artifact,
+                )()
             logger.info("Model Trainer Completed")
-            # return model_trainer_component
+            return model_trainer_components
         except Exception as e:
             logger.error(f"Error during model trainer {e}")
             raise e
@@ -123,7 +144,9 @@ class BasePipeline:
             data_ingestion_artifact=data_ingestion_artifact
         )
 
-        self.do_model_trainer(data_validation_artifact=data_validation_artifact)
+        model_trainer_components = self.do_model_trainer(
+            data_validation_artifact=data_validation_artifact
+        )
         logger.info("Base Pipeline Completed")
 
-        return data_ingestion_artifact
+        return model_trainer_components

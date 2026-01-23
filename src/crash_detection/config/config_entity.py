@@ -1,5 +1,5 @@
 from ..core.io_types import Directory
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from pathlib import Path
 from typing import Optional
 from .. import logger
@@ -12,11 +12,11 @@ class DataSchema(BaseModel):
     name: str
     path: Path | str | Directory
 
-    train: Optional[str | Path] = None
+    train: Optional[list[str | Path]] = None
     train_image_folder: Optional[str | Path] = None
-    valid: Optional[str | Path] = None
+    valid: Optional[list[str | Path]] = None
     valid_image_folder: Optional[str | Path] = None
-    test: Optional[str | Path] = None
+    test: Optional[list[str | Path]] = None
     test_image_folder: Optional[str | Path] = None
 
     columns: Optional[dict[str, str]] = None
@@ -114,4 +114,15 @@ class ModelTrainingConfig(BaseModel):
     name: str
     type: str
     transforms: Optional[DataTransformationConfig] = None
+
+    source_model: str
+    loss: str
+    metrics: list[str]
+    optimizer: str
+    learning_rate: float
+    train_batch_size: int
+    valid_batch_size: int
+    n_epochs: int
+    gradient_accumulation_steps: int
+
     outdir: Directory

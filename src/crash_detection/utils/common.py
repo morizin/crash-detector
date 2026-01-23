@@ -6,6 +6,7 @@ from .. import logger
 import os
 import random
 import numpy as np
+import bson
 import torch
 
 
@@ -18,6 +19,64 @@ def seed_everything(seed: int = 42) -> None:
     torch.cuda.manual_seed(seed)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+
+@typechecked
+def load_pickle(path: Path | str) -> Any:
+    import pickle
+
+    if isinstance(path, str):
+        path = Path(path)
+    try:
+        with open(path, "rb") as pickle_file:
+            data = pickle.load(pickle_file)
+        logger.info(f"Successfully loaded Pickle file : {path}")
+        return data
+    except Exception as e:
+        logger.error(f"Failed to load Pickle file : {path}")
+        raise e
+
+
+@typechecked
+def save_pickle(path: Path | str, data: Any):
+    import pickle
+
+    if isinstance(path, str):
+        path = Path(path)
+    try:
+        with open(path, "wb") as pickle_file:
+            pickle.dump(data, pickle_file)
+        logger.info(f"Successfully saved Pickle file : {path}")
+    except Exception as e:
+        logger.error(f"Failed to save Pickle file : {path}")
+        raise e
+
+
+@typechecked
+def load_bson(path: Path | str) -> Any:
+    if isinstance(path, str):
+        path = Path(path)
+    try:
+        with open(path, "rb") as bson_file:
+            data = bson.loads(bson_file.read())
+        logger.info(f"Successfully loaded BSON file : {path}")
+        return data
+    except Exception as e:
+        logger.error(f"Failed to load BSON file : {path}")
+        raise e
+
+
+@typechecked
+def save_bson(path: Path | str, data: Any):
+    if isinstance(path, str):
+        path = Path(path)
+    try:
+        with open(path, "wb") as bson_file:
+            bson_file.write(bson.dumps(data))
+        logger.info(f"Successfully saved BSON file : {path}")
+    except Exception as e:
+        logger.error(f"Failed to save BSON file : {path}")
+        raise e
 
 
 @typechecked

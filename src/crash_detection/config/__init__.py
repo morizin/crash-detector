@@ -22,15 +22,47 @@ from ..constants import (
     TRANSFORMED_DATA_DIRECTORY_NAME,
 )
 from ..core import Directory
+from ..core.hw_info import get_hw_details
 import os
 
 
 class ConfigurationManager:
-    def __init__(self, config_path=CONFIG_PATH):
+    def __init__(self, config_path=CONFIG_PATH, latest: bool = False) -> None:
         self.config = load_yaml(config_path)
-        self.artifact_path = Directory(path=self.config.artifact_path) // TIMESTAMP
+
+        if latest:
+            latest_artifact_path = max(
+                [
+                    d
+                    for d in os.listdir(self.config.artifact_path)
+                    if os.path.isdir(os.path.join(self.config.artifact_path, d))
+                ],
+                default=None,
+            )
+            if latest_artifact_path is None:
+                raise ValueError(
+                    f"No artifact directories found in {self.config.artifact_path}"
+                )
+
+            logger.info(f"Using latest artifact path: {latest_artifact_path}")
+            self.artifact_path = (
+                Directory(path=self.config.artifact_path) // latest_artifact_path
+            )
+
+        else:
+            self.artifact_path = Directory(path=self.config.artifact_path) // TIMESTAMP
+
         self.data_dir = Directory(path=DATA_DIRECTORY_NAME)
         self.schema_path = Path(SCHEMA_DIR)
+
+        n_procs, n_threads = get_hw_details()
+        logger.info(f"Number of Processors: {n_procs}")
+        logger.info(f"Number of Threads per Processor: {n_threads}")
+
+        self.config["hardware"] = {
+            "n_procs": n_procs,
+            "n_threads": n_threads,
+        }
 
         if not os.path.exists(self.schema_path):
             logger.warning(f"Schema directory {self.schema_path} does not exist.")
@@ -68,7 +100,7 @@ class ConfigurationManager:
             schemas=data_ingestion_artifact.schemas,
         )
 
-    def model_training_config(
+    def get_model_training_config(
         self, data_validation_artifact: DataValidationArtifact
     ) -> dict[str, ModelTrainingConfig]:
         models = self.config.models
@@ -80,7 +112,11 @@ class ConfigurationManager:
                 type=params.type,
                 transforms=DataTransformationConfig(
                     indir=data_validation_artifact.valid_data_dir,
-                    schemas=data_validation_artifact.schemas,
+                    schemas={
+                        name: schema
+                        for name, schema in data_validation_artifact.schemas.items()
+                        if name in params.datasets
+                    },
                     split=DataSplitConfig(
                         type=params.transforms.split.type,
                         ratio=params.transforms.split.ratio,
@@ -102,6 +138,17 @@ class ConfigurationManager:
                 )
                 if hasattr(params, "transforms")
                 else None,
+                source_model=params.source_model
+                if hasattr(params, "source-model")
+                else None,
+                loss=params.loss,
+                metrics=params.metrics if hasattr(params, "metrics") else [],
+                optimizer=params.optimizer,
+                learning_rate=params.learning_rate,
+                train_batch_size=params.train_batch_size,
+                valid_batch_size=params.valid_batch_size,
+                n_epochs=params.n_epochs,
+                gradient_accumulation_steps=params.gradient_accumulation_steps,
                 outdir=self.artifact_path // MODELS_DIRECTORY_NAME // model,
             )
 
