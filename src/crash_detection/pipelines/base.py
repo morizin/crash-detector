@@ -19,7 +19,7 @@ from .. import logger
 from ..components.data.ingestion import DataIngestionComponent
 from ..components.data.transformation import DataTransformationComponent
 from ..components.data.validation import DataValidationComponent
-from ..components.training import ModelTrainingComponent
+from ..components.model.train import ModelTrainingComponent
 from ..utils.common import save_pickle
 
 

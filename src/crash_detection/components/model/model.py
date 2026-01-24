@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 from typeguard import typechecked
-from .loss import get_loss_function
 from typing import Collection
 from ...config.config_entity import ModelTrainingConfig
+from .loss import get_loss_function
 
 
 class Model(nn.Module):
@@ -27,14 +27,16 @@ class Model(nn.Module):
         )
         self.backbone.fc = nn.Linear(512, 1)
 
-        self.criterion = get_loss_function(self.config.loss)
+        self.criterion = get_loss_function(config.loss)
 
     @typechecked
     def forward(self, inputs: Collection[torch.Tensor | None]) -> torch.Tensor:
         return self.backbone(inputs)
 
     @typechecked
-    def forward_step(self, inputs: Collection[torch.Tensor | None]) -> torch.Tensor:
+    def forward_step(
+        self, inputs: Collection[torch.Tensor | None], logits: bool = False
+    ) -> torch.Tensor:
         images, labels = inputs
         images = (
             images.to(self.device, non_blocking=True).float().permute(0, 3, 1, 2)
@@ -45,6 +47,9 @@ class Model(nn.Module):
         if labels is not None:
             labels = labels.to(self.device, non_blocking=True).float().unsqueeze(1)
             loss = self.criterion(logits, labels)
-            return loss
+            if logits:
+                return loss, logits
+            else:
+                return loss
         else:
             return logits
