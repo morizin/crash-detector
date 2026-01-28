@@ -4,11 +4,11 @@ from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from .optimizer import get_optimizer
 from ...config.config_entity import ModelTrainingConfig
-from ...config.artifact_entity import ModelTrainingArtifact, ClassificationArtifact
+from ...config.artifact_entity import ModelTrainingArtifact
 from typeguard import typechecked
 from .dataset import CachedVideoCrashDataset
 from ...config.artifact_entity import DataTransformationArtifact
-from ...utils.common import load_csv, save_pickle
+from ...utils.common import load_csv
 from torch.utils.tensorboard import SummaryWriter
 from .utils import AverageMeter
 from .loss import get_loss_function

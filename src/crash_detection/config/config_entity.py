@@ -1,5 +1,5 @@
 from ..core.io_types import Directory
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 from pathlib import Path
 from typing import Optional
 from .. import logger
