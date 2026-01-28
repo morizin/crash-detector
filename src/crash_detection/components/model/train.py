@@ -8,7 +8,7 @@ from ...config.artifact_entity import ModelTrainingArtifact, ClassificationArtif
 from typeguard import typechecked
 from .dataset import CachedVideoCrashDataset
 from ...config.artifact_entity import DataTransformationArtifact
-from ...utils.common import load_csv
+from ...utils.common import load_csv, save_pickle
 from torch.utils.tensorboard import SummaryWriter
 from .utils import AverageMeter
 from .loss import get_loss_function
@@ -39,8 +39,6 @@ class ModelTrainingComponent:
         )
 
         self.model = Model(config=self.config)
-
-        self.model.to(self.device)
 
         self.train_batch_size = self.config.train_batch_size
         self.train_dataloader = self._create_dataloader(
@@ -73,7 +71,7 @@ class ModelTrainingComponent:
         self.train_loss_meter = AverageMeter()
         self.valid_loss_meter = AverageMeter()
 
-        self.writer = SummaryWriter(log_dir=str(self.config.outdir / "runs"))
+        self.writer = SummaryWriter(log_dir="runs/" + self.config.name)
 
     def get_data(self):
         # Load CSV Files
@@ -97,21 +95,10 @@ class ModelTrainingComponent:
         )
 
         for step, inputs in pbar:
-            loss, logits = self.model.forward_step(inputs, logits=True)
+            loss, logits = self.model.forward_step(inputs, get_logits=True)
             self.writer.add_scalar(
                 "Train/Loss", loss.item(), self.i_epoch * self.n_train_batches + step
             )
-
-            for metric_name, (metric_fn, train_meter, _) in self.metrics.items():
-                preds = (torch.sigmoid(logits) > 0.5).cpu().numpy()
-                targets = inputs[1].cpu().numpy()
-                metric_value = metric_fn(targets, preds)
-                train_meter.update(metric_value, n=inputs[0].size(0))
-                self.writer.add_scalar(
-                    f"Train/{metric_name}",
-                    metric_value,
-                    self.i_epoch * self.n_train_batches + step,
-                )
 
             loss = loss / self.config.gradient_accumulation_steps
             self.train_loss_meter.update(loss.item(), n=inputs[0].size(0))
@@ -128,6 +115,17 @@ class ModelTrainingComponent:
                 self.optimizer.step()
                 self.optimizer.zero_grad()
 
+            for metric_name, (metric_fn, train_meter, _) in self.metrics.items():
+                preds = (torch.sigmoid(logits) > 0.5).cpu().numpy()
+                targets = inputs[1].cpu().numpy()
+                metric_value = metric_fn(targets, preds)
+                train_meter.update(metric_value, n=inputs[0].size(0))
+                self.writer.add_scalar(
+                    f"Train/{metric_name}",
+                    metric_value,
+                    self.i_epoch * self.n_train_batches + step,
+                )
+            break
         train_loss_avg = self.train_loss_meter.avg
         self.train_loss_meter.reset()
         return train_loss_avg
@@ -142,11 +140,17 @@ class ModelTrainingComponent:
                 desc=f"Valid Loop [{self.i_epoch + 1}/{self.config.n_epochs}]",
             )
             for step, inputs in pbar:
-                loss, logits = self.model.forward_step(inputs, logits=True)
+                loss, logits = self.model.forward_step(inputs, get_logits=True)
                 self.writer.add_scalar(
                     "Valid/Loss",
                     loss.item(),
                     self.i_epoch * self.n_valid_batches + step,
+                )
+
+                loss = loss / self.config.gradient_accumulation_steps
+                self.valid_loss_meter.update(loss.item(), n=inputs[0].size(0))
+                pbar.set_postfix(
+                    loss=f"{loss.item():.4f}", avg_loss=str(self.valid_loss_meter)
                 )
 
                 for metric_name, (metric_fn, _, valid_meter) in self.metrics.items():
@@ -159,12 +163,7 @@ class ModelTrainingComponent:
                         metric_value,
                         self.i_epoch * self.n_valid_batches + step,
                     )
-
-                loss = loss / self.config.gradient_accumulation_steps
-                self.valid_loss_meter.update(loss.item(), n=inputs[0].size(0))
-                pbar.set_postfix(
-                    loss=f"{loss.item():.4f}", avg_loss=str(self.valid_loss_meter)
-                )
+                break
 
         valid_loss_avg = self.valid_loss_meter.avg
         self.valid_loss_meter.reset()
@@ -191,6 +190,7 @@ class ModelTrainingComponent:
         torch.save(self.model.state_dict(), model_path)
         logger.info(f"Model saved at: {model_path}")
 
+    @typechecked
     def __call__(
         self,
     ) -> ModelTrainingArtifact:
@@ -198,11 +198,12 @@ class ModelTrainingComponent:
         self.save_model()
 
         return ModelTrainingArtifact(
-            model_name=self.config.name,
+            name=self.config.name,
             model_path=self.config.outdir / f"{self.config.name}_model.pth",
             train_loss=train_loss,
             valid_loss=valid_loss,
-            classification_artifact=ClassificationArtifact(
-                **{metric: meter.avg for metric, (_, _, meter) in self.metrics.items()}
-            ),
         )
+
+    # classification_artifact=ClassificationArtifact(
+    #             **{metric: meter.avg for metric, (_, _, meter) in self.metrics.items()}
+    #         ),

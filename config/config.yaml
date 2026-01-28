@@ -34,7 +34,7 @@ models:
     learning-rate: 0.001
     train-batch-size: 32
     valid-batch-size: 32
-    n-epochs: 10
+    n-epochs: 1
     gradient-accumulation-steps: 1
     outdir: video-classifier
 

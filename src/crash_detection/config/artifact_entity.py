@@ -35,12 +35,13 @@ class ClassificationArtifact(BaseModel):
 
 
 class ModelTrainingArtifact(BaseModel):
-    model_name: str
-    model_path: Path
+    name: str
+    model_path: Path | str
     train_loss: float | None = None
     valid_loss: float | None = None
-    classification_artifact: Optional[ClassificationArtifact] = None
 
 
 class ModelEvaluationArtifact(BaseModel):
-    classification_artifact: Optional[ClassificationArtifact] = None
+    name: str
+    valid_classification_artifact: Optional[ClassificationArtifact] = None
+    test_classification_artifact: Optional[ClassificationArtifact] = None

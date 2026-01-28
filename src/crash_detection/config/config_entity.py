@@ -126,3 +126,11 @@ class ModelTrainingConfig(BaseModel):
     gradient_accumulation_steps: int
 
     outdir: Directory
+
+
+class ModelEvaluationConfig(BaseModel):
+    name: str
+    valid_file_path: Path
+    test_file_path: Path
+    metrics: list[str]
+    model_path: Path | str

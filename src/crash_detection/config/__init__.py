@@ -7,9 +7,15 @@ from .config_entity import (
     DataTransformationConfig,
     ModelTrainingConfig,
     DataSplitConfig,
+    ModelEvaluationConfig,
 )
 
-from .artifact_entity import DataIngestionArtifact, DataValidationArtifact
+from .artifact_entity import (
+    DataIngestionArtifact,
+    DataValidationArtifact,
+    DataTransformationArtifact,
+    ModelTrainingArtifact,
+)
 
 from ..utils.common import load_yaml, seed_everything
 from ..constants import (
@@ -153,3 +159,18 @@ class ConfigurationManager:
             )
 
         return model_configs
+
+    def get_model_evaluation_config(
+        self,
+        data_transformation_artifact: DataTransformationArtifact,
+        model_training_artifact: ModelTrainingArtifact,
+    ) -> ModelEvaluationConfig:
+        models = self.config.models
+        params = models[model_training_artifact.name]
+        return ModelEvaluationConfig(
+            name=model_training_artifact.name,
+            valid_file_path=data_transformation_artifact.valid_file_path,
+            test_file_path=data_transformation_artifact.test_file_path,
+            model_path=model_training_artifact.model_path,
+            metrics=params.metrics if hasattr(params, "metrics") else ["accuracy"],
+        )
