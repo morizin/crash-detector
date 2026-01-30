@@ -2,12 +2,14 @@ from typeguard import typechecked
 from pathlib import Path
 from box import ConfigBox
 from typing import Any
-from .. import logger
 import os
 import random
 import numpy as np
 import bson
 import torch
+import logging
+
+logger = logging.getLogger("CrashDetectionLogger")
 
 
 @typechecked

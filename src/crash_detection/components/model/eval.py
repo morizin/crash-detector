@@ -8,7 +8,9 @@ from typeguard import typechecked
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import torch
 from tqdm import tqdm
-from ... import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ModelEvaluationComponent:

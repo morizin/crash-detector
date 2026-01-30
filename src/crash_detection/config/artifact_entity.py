@@ -36,6 +36,7 @@ class ClassificationArtifact(BaseModel):
 
 class ModelTrainingArtifact(BaseModel):
     name: str
+    outdir: Directory
     model_path: Path | str
     train_loss: float | None = None
     valid_loss: float | None = None
@@ -45,3 +46,10 @@ class ModelEvaluationArtifact(BaseModel):
     name: str
     valid_classification_artifact: Optional[ClassificationArtifact] = None
     test_classification_artifact: Optional[ClassificationArtifact] = None
+
+
+class ModelExportingArtifact(BaseModel):
+    model_path: Path
+    onnx_model_path: Path
+    input_shape: Optional[tuple] = None
+    output_shape: Optional[tuple] = None

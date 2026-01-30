@@ -1,4 +1,3 @@
-from .. import logger, TIMESTAMP
 from pathlib import Path
 from .config_entity import (
     DataSource,
@@ -8,6 +7,7 @@ from .config_entity import (
     ModelTrainingConfig,
     DataSplitConfig,
     ModelEvaluationConfig,
+    ModelExportingConfig,
 )
 
 from .artifact_entity import (
@@ -30,6 +30,9 @@ from ..constants import (
 from ..core import Directory
 from ..core.hw_info import get_hw_details
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigurationManager:
@@ -56,7 +59,10 @@ class ConfigurationManager:
             )
 
         else:
-            self.artifact_path = Directory(path=self.config.artifact_path) // TIMESTAMP
+            self.artifact_path = (
+                Directory(path=self.config.artifact_path)
+                // os.environ["CRASH_DETECTION_RUN_ID"]
+            )
 
         self.data_dir = Directory(path=DATA_DIRECTORY_NAME)
         self.schema_path = Path(SCHEMA_DIR)
@@ -173,4 +179,14 @@ class ConfigurationManager:
             test_file_path=data_transformation_artifact.test_file_path,
             model_path=model_training_artifact.model_path,
             metrics=params.metrics if hasattr(params, "metrics") else ["accuracy"],
+        )
+
+    def get_model_exporting_config(
+        self, model_training_artifact: ModelTrainingArtifact
+    ) -> ModelExportingConfig:
+        return ModelExportingConfig(
+            name=model_training_artifact.name,
+            model_path=model_training_artifact.model_path,
+            onnx_opset=self.config.models[model_training_artifact.name].onnx_opset,
+            outdir=self.artifact_path // "onnx" // model_training_artifact.name,
         )

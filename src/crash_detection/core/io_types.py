@@ -3,7 +3,9 @@ from pathlib import Path
 from typeguard import typechecked
 from typing import Union
 from pydantic import BaseModel, field_validator
-from .. import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class Directory(BaseModel):

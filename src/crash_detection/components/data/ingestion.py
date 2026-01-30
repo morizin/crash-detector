@@ -3,7 +3,9 @@ import os
 from ...config.config_entity import DataIngestionConfig, DataSchema
 from ...config.artifact_entity import DataIngestionArtifact
 from ...errors import ComponentError
-from ... import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DataIngestionComponent:

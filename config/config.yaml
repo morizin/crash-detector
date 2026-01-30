@@ -9,7 +9,7 @@ data:
 
 
 models:
-  video-classifier:
+  video-classifier1:
     datasets: [ gta-crash ]
     type: video-2d-classification
     transforms:
@@ -35,6 +35,7 @@ models:
     train-batch-size: 32
     valid-batch-size: 32
     n-epochs: 1
+    onnx-opset: 18
     gradient-accumulation-steps: 1
     outdir: video-classifier
 

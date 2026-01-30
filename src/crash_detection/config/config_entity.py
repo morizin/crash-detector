@@ -2,10 +2,12 @@ from ..core.io_types import Directory
 from pydantic import BaseModel
 from pathlib import Path
 from typing import Optional
-from .. import logger
 from ..utils.common import load_yaml
 from ..constants import SCHEMA_DIR
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DataSchema(BaseModel):
@@ -134,3 +136,10 @@ class ModelEvaluationConfig(BaseModel):
     test_file_path: Path
     metrics: list[str]
     model_path: Path | str
+
+
+class ModelExportingConfig(BaseModel):
+    name: str
+    model_path: Path | str
+    onnx_opset: int
+    outdir: Directory

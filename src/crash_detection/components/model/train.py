@@ -13,7 +13,9 @@ from torch.utils.tensorboard import SummaryWriter
 from .utils import AverageMeter
 from .loss import get_loss_function
 from .metrics import get_metrics
-from ... import logger
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class ModelTrainingComponent:
@@ -126,6 +128,7 @@ class ModelTrainingComponent:
                     self.i_epoch * self.n_train_batches + step,
                 )
             break
+
         train_loss_avg = self.train_loss_meter.avg
         self.train_loss_meter.reset()
         return train_loss_avg
@@ -199,6 +202,7 @@ class ModelTrainingComponent:
 
         return ModelTrainingArtifact(
             name=self.config.name,
+            outdir=self.config.outdir,
             model_path=self.config.outdir / f"{self.config.name}_model.pth",
             train_loss=train_loss,
             valid_loss=valid_loss,
