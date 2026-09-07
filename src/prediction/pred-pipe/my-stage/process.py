@@ -1,9 +1,16 @@
-def hook(frame_data, context):
-    frame = frame_data[
-        "modified"
-    ]  # Using 'modified' to propagate changes from possible previous stages in the frame execution path
-    # Do something to the frame here
-    # ...
+import numpy as np
+import logging
 
-    # If you did not modify the frame in place update it
-    frame_data["modified"] = frame
+
+def hook(frame_data, context):
+    preds = []
+    for engine in context["engines"]:
+        inputs = {
+            engine.get_inputs()[0].name: np.expand_dims(
+                frame_data["inference_input"], axis=0
+            )
+        }
+        outputs = engine.run(None, inputs)[0].flatten()[0]
+        preds.append(outputs)
+
+    frame_data["inference_output"] = np.array(preds)

@@ -1,9 +1,9 @@
-def hook(frame_data, context):
-    frame = frame_data[
-        "modified"
-    ]  # Using 'modified' to propagate changes from possible previous stages in the frame execution path
-    # Do something to the frame here
-    # ...
+import numpy as np
 
-    # If you did not modify the frame in place update it
-    frame_data["modified"] = frame
+
+def hook(frame_data, context):
+    preds = frame_data["inference_output"]
+    preds = np.where(
+        preds >= 0, 1 / (1 + np.exp(-preds)), np.exp(preds) / (1 + np.exp(preds))
+    )
+    frame_data["user_data"] = {"prediction": preds.tolist()}

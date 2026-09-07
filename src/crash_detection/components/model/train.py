@@ -28,12 +28,6 @@ class ModelTrainingComponent:
         self.config = config
         self.data_transformation_artifact = data_transformation_artifact
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        logger.info(f"Using device: {self.device}")
-
-        if self.device.type == "cuda":
-            logger.info(f"CUDA Device: {torch.cuda.get_device_name(0)}")
-
         train_dataset, valid_dataset = self.get_data()
         train_dataset = CachedVideoCrashDataset(train_dataset)
         valid_dataset = (
@@ -127,7 +121,7 @@ class ModelTrainingComponent:
                     metric_value,
                     self.i_epoch * self.n_train_batches + step,
                 )
-            break
+            # break
 
         train_loss_avg = self.train_loss_meter.avg
         self.train_loss_meter.reset()
@@ -166,7 +160,7 @@ class ModelTrainingComponent:
                         metric_value,
                         self.i_epoch * self.n_valid_batches + step,
                     )
-                break
+                # break
 
         valid_loss_avg = self.valid_loss_meter.avg
         self.valid_loss_meter.reset()

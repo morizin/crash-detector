@@ -1,0 +1,19 @@
+services:
+  crash-prediction:
+    image: morizin/crash-prediction
+    build:
+      context: src/prediction
+
+    volumes:
+      # - ./src/prediction/pred-pipe:/app/pred-pipe
+      - ./artifacts:/app/artifacts
+
+    ports:
+      - "3030:3030"
+      
+    networks:
+      - crash-net
+
+networks:
+  crash-net:
+    driver: bridge
